@@ -1,5 +1,9 @@
+#directories
 .vs
-PublishProfiles
+PublishProfiles/
+bin/
+obj/
+
+#files
 launchSettings.json
-/CalendarAgeUpdater/obj
 *.csproj.user
