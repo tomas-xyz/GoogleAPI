@@ -1,0 +1,1 @@
+CalendarAgeUpdater.exe "(.*) - narozeniny \((.*)\)" 2 "$1+ $Y+ ($2)"
