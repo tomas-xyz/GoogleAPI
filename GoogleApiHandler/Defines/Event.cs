@@ -13,13 +13,13 @@ namespace GoogleApiHandler.Defines
             Id = id;
             Description = description;
             UpdatedDescription = string.Empty;
-            Date = date;
+            Date = DateTime.Parse(date);
         }
 
         public string Id { get; set; }
         public string Description { get; set; }
         public string UpdatedDescription { get; set; }
-        public string Date { get; set; }
+        public DateTime Date { get; set; }
 
     }
 }

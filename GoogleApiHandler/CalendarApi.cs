@@ -57,22 +57,35 @@ namespace tomxyz.googleapi
         /// Get all events from the calendar
         /// </summary>
         /// <param name="calendarId">calendar id</param>
-        /// <param name="year">year of the events</param>
+        /// <param name="yearsToProcess">count of years to process</param>
         /// <returns>events</returns>
-        public async Task<IEnumerable<Event>> GetAllEventsAsync(string calendarId, int year)
+        public async Task<IEnumerable<Event>> GetAllEventsAsync(string calendarId, int yearsToProcess)
         {
             if (Service == null)
                 throw new Exception("Google account is not authenticated");
 
+            var items = new List<Event>();
+
+            var now = DateTime.Now;
             var request = Service.Events.List(calendarId);
-            request.TimeMin = new DateTime(year, 1, 1);
-            request.TimeMax = new DateTime(year, 12, 31);
+            request.TimeMin = new DateTime(now.Year, 1, 1);
+            request.TimeMax = new DateTime(now.Year + yearsToProcess, 12, 31);
             request.ShowDeleted = false;
             request.SingleEvents = true;
             request.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
 
-            var result = await request.ExecuteAsync();
-            return result.Items.Select(x => new Event(x.Id, x.Summary, x.Start.Date));
+            Google.Apis.Calendar.v3.Data.Events result;
+            do
+            {
+                result = await request.ExecuteAsync();
+                if (result != null)
+                {
+                    items.AddRange(result.Items.Select(x => new Event(x.Id, x.Summary, x.Start.Date)));
+                    request.PageToken = result.NextPageToken;
+                }
+            } while (result != null && result.NextPageToken != null);
+
+            return items;
         }
 
         /// <summary>

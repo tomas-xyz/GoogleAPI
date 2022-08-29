@@ -13,8 +13,8 @@ namespace tomxyz.googleapi
         [Option('p', "pattern", Required = true, HelpText = "Pattern of target event name where '$number' is marking groups from regex_to_find and $Y stands for age.\r\n\tCharacter + is delimeter. Sample: $1+$Y+($2)")]
         public string Patttern { get; set; }
 
-        [Option('y', "year", Required = false, HelpText = $"year that will be used for event listing. Current year is default)")]
-        public int? Year { get; set; }
+        [Option('y', "years", Required = false, HelpText = $"Years count to process from current year. 1 is default")]
+        public int? Years { get; set; }
     }
 }
 

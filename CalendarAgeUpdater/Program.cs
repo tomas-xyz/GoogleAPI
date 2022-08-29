@@ -29,16 +29,16 @@ namespace tomxyz.googleapi
         /// Get new name of the event
         /// </summary>
         /// <param name="regexMatch">match for the event's summeary and configured regex</param>
+        /// <param name="oneEvent">event from calendar</param>
         /// <param name="targetPattern">pattern for target name</param>
         /// <param name="yearGroup">group with tour from regexMatch</param>
-        /// <param name="yearForAge">year for calculating the age</param>
         /// <returns>new summary/description or empty string if some error occures</returns>
-        private static string CalculateNewEventSummary(Match regexMatch, string targetPattern, int yearGroup, int yearForAge)
+        private static string CalculateNewEventSummary(Match regexMatch, GoogleApiHandler.Defines.Event oneEvent, string targetPattern, int yearGroup)
         {
             try
             {
                 var year = int.Parse(regexMatch.Groups[yearGroup].Value);
-                var age = yearForAge - year;
+                var age = oneEvent.Date.Year - year;
                 string summary = string.Empty;
 
                 var tokens = targetPattern.Split("+", StringSplitOptions.RemoveEmptyEntries);
@@ -69,11 +69,11 @@ namespace tomxyz.googleapi
             }
         }
 
-        public static async Task StartProcessingAsync(string regexFind, int yearGroup, int? eventsYear, string targetPattern)
+        public static async Task StartProcessingAsync(string regexFind, int yearGroup, int? yearsToProcess, string targetPattern)
         {
             var rFind = new Regex(regexFind, RegexOptions.IgnoreCase);
-            if (!eventsYear.HasValue)
-                eventsYear = DateTime.Now.Year;
+            if (!yearsToProcess.HasValue)
+                yearsToProcess = 1;
 
             // set utf-8 encoding for console output
             Console.OutputEncoding = Encoding.UTF8;
@@ -104,11 +104,11 @@ namespace tomxyz.googleapi
             Console.WriteLine($"Selected calendar: {index} - {calendar.Name}");
             Console.WriteLine();
 
-            var events = await calendarApi.GetAllEventsAsync(calendar.Id, eventsYear.Value);
+            var events = await calendarApi.GetAllEventsAsync(calendar.Id, yearsToProcess.Value);
             var filtered = events
                 .Select(x => (rFind.Match(x.Description), x))
                 .Where(x => x.Item1.Success)
-                .Select(x => (x.Item2, CalculateNewEventSummary(x.Item1, targetPattern, yearGroup, eventsYear.Value)));
+                .Select(x => (x.Item2, CalculateNewEventSummary(x.Item1, x.Item2, targetPattern, yearGroup)));
 
             while (true)
             {
@@ -139,7 +139,7 @@ namespace tomxyz.googleapi
                     }
 
                     Console.WriteLine($"Events updated. New events in calendar: ");
-                    events = await calendarApi.GetAllEventsAsync(calendar.Id, eventsYear.Value);
+                    events = await calendarApi.GetAllEventsAsync(calendar.Id, yearsToProcess.Value);
                     foreach (var e in events)
                         Console.WriteLine($"{e.Date}: {e.Description}");
 
@@ -158,7 +158,7 @@ namespace tomxyz.googleapi
                    .WithParsed<Options>(o =>
                    {
 
-                       StartProcessingAsync(o.Regex, o.Group, o.Year, o.Patttern)
+                       StartProcessingAsync(o.Regex, o.Group, o.Years, o.Patttern)
                        .GetAwaiter().GetResult();
                    })
                    .WithNotParsed<Options>(async =>
